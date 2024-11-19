@@ -91,7 +91,7 @@ You have:
             this.elMoney.innerText = data.money;
             this.elWorkerContainer.hidden = data.workers == 0 && !this.canGetWorker();
             this.elSacrificeContainer.hidden = data.sacrifices == 0 && !this.canGetSacrifice();
-            this.btnBuyWorker.hidden = data.workers == 0 && !this.canGetWorker();
+            this.btnBuyWorker.hidden = data.tot_workers == 0 && !this.canGetWorker();
             this.elWorkerCost.innerText = this.getWorkerCost();
             this.elWorkerCount.innerText = data.workers;
             this.elWorkerMoneyPerTick.innerText = this.getTickMoney();

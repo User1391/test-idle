@@ -1,0 +1,168 @@
+<!doctype html>
+
+<html>
+<!-- Broadly inspired by https://github.com/Dimava/dimava.github.io/blob/master/idle-game-examples/cancer/index.html#L91 -->
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Test-IDLE</title>
+
+    <style>
+        #gameLog {
+            width: 100%;
+            height: 200px; /* Set the height of the log area */
+            border: 1px solid #ccc;
+            padding: 5px;
+            overflow-y: auto; /* Enable vertical scrolling */
+            background-color: #f9f9f9;
+            font-family: monospace;
+        }
+        #gameLog p {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Test-IDLE</h1>
+
+You have:
+<div id="elMoneyContainer"> Money: $<span id="elMoney"></span></div>
+<div id="elWorkerContainer"> Workers: <span id="elWorkerCount"></span> workers earning you $<span id="elWorkerMoneyPerTick"></span> per second</div>
+<div id="elSacrificeContainer"> Sacrifices: <span id="elSacrificeCount"></span></div>
+<br>
+<button onclick="game.getMoney()">Get Money</button>
+<button onclick="game.getWorker()" id="btnBuyWorker">Hire a Worker ($<span id="elWorkerCost"></span>)</button>
+<br>
+<button onclick="game.getSacrifice()" id="btnSacrifice">Sacrifice <span id="elSacrificeCost"></span> workers</button>
+<br>
+<div id="logContainer">
+    <h2>Log</h2>
+    <div id="gameLog"></div>
+</div>
+
+<script>
+    var data = {
+        money: 0,
+        tot_money: 0,
+        gained_work: false,
+        workers: 0,
+        tot_workers: 0,
+        gained_sac: false,
+        sacrifices: 0,
+    };
+
+    var game = {
+        init() {
+            this.elMoney = document.getElementById('elMoney');
+            this.elWorkerContainer = document.getElementById('elWorkerContainer');
+            this.elSacrificeContainer = document.getElementById('elSacrificeContainer');
+            this.elWorkerMoneyPerTick = document.getElementById('elWorkerMoneyPerTick');
+            this.btnBuyWorker = document.getElementById('btnBuyWorker');
+            this.elWorkerCost = document.getElementById('elWorkerCost');
+            this.elWorkerCount = document.getElementById('elWorkerCount');
+            this.btnSacrifice = document.getElementById('btnSacrifice');
+            this.elSacrificeCost = document.getElementById('elSacrificeCost');
+            this.elSacrificeCount = document.getElementById('elSacrificeCount');
+            this.gameLog = document.getElementById('gameLog');
+
+            this.addLog('You are a simple villager, trying to make it big.');
+        },
+        addLog(message) {
+            const logEntry = document.createElement('p');
+            logEntry.textContent = message;
+            this.gameLog.appendChild(logEntry);
+
+            // Scroll to the bottom of the log
+            this.gameLog.scrollTop = this.gameLog.scrollHeight;
+        },
+        tick() {
+        data.money += this.getTickMoney();
+        data.tot_money += this.getTickMoney();
+        this.updateDisplay();
+        },
+        getTickMoney() {
+            return Math.round(data.workers * (1 + 0.5 * data.sacrifices));
+        },
+        updateDisplay() {
+            this.elMoney.innerText = data.money;
+            this.elWorkerContainer.hidden = data.workers == 0 && !this.canGetWorker();
+            this.elSacrificeContainer.hidden = data.sacrifices == 0 && !this.canGetSacrifice();
+            this.btnBuyWorker.hidden = data.workers == 0 && !this.canGetWorker();
+            this.elWorkerCost.innerText = this.getWorkerCost();
+            this.elWorkerCount.innerText = data.workers;
+            this.elWorkerMoneyPerTick.innerText = this.getTickMoney();
+            this.btnSacrifice.hidden = data.sacrifices == 0 && !this.canGetSacrifice();
+            this.elSacrificeCost.innerText = this.getSacrificeCost();
+            this.elSacrificeCount.innerText = data.sacrifices;
+            if (data.tot_money == 10 && !data.gained_work) {
+                this.addLog('You find that many in the village are open to work for you.');
+                data.gained_work = true;
+            }
+            if (data.tot_workers == 10 && !data.gained_sac) {
+                this.addLog('The great gods of the depths yearn for sacrifice.');
+                data.gained_sac = true;
+            }
+        },
+        getMoney() {
+            data.money++;
+            data.tot_money++;
+            game.updateDisplay();
+        },
+        getWorkerCost() {
+            return Math.round(10 * ((1.17)**data.tot_workers));
+        },
+        canGetWorker() {
+            return data.money >= this.getWorkerCost();
+        },
+        getWorker() {
+            if (this.canGetWorker()) {
+                data.money -= this.getWorkerCost();
+                data.workers++;
+                data.tot_workers++;
+            }
+            this.updateDisplay();
+        },
+        getSacrificeCost() {
+            return Math.round(10 * ((1.3)**data.sacrifices));
+        },
+        canGetSacrifice() {
+            return data.workers >= this.getSacrificeCost();
+        },
+        getSacrifice() {
+            if (this.canGetSacrifice()) {
+                data.workers -= this.getSacrificeCost();
+                this.addLog(`Sacrificed ${this.getSacrificeCost()} workers to the depths.`);
+                data.sacrifices++;
+            }
+            this.updateDisplay();
+        },
+        save (savename = 'testsave') {
+            localStorage.setItem(savename, JSON.stringify(savename));
+        },
+        load(savename = 'testsave') {
+            Object.assign(data, JSON.parse(localStorage.getItem(savename) || '{}'));
+            this.init();
+            this.updateDisplay();
+        },
+        clearSave(savename = 'testsave') {
+            localStorage.setItem(savename, '{}');
+            location.reload();
+        },
+        start() {
+            setInterval(() => this.tick(), 1e3);
+            setInterval(() => this.save(), 10e3);
+        },
+    };
+
+    game.load();
+    game.start();
+
+</script>
+
+</body>
+
+</html>
